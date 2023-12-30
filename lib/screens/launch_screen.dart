@@ -2,14 +2,15 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:wise_verbs/constants/constants.dart';
 import 'package:wise_verbs/screens/home/home_screen.dart';
+import 'package:wise_verbs/screens/index/index.dart';
+import 'package:wise_verbs/widget/route_transition.dart';
 
 
 class LaunchScreen extends StatefulWidget {
   const LaunchScreen({Key? key}) : super(key: key);
 
   @override
-  // ignore: library_private_types_in_public_api
-  _LaunchScreenState createState() => _LaunchScreenState();
+  State<LaunchScreen> createState() => _LaunchScreenState();
 }
 
 class _LaunchScreenState extends State<LaunchScreen>
@@ -21,7 +22,7 @@ class _LaunchScreenState extends State<LaunchScreen>
 
   late AnimationController _controller;
   late Animation<double> animation1;
-
+  bool showSubText = true;
   @override
   void initState() {
     super.initState();
@@ -42,6 +43,9 @@ class _LaunchScreenState extends State<LaunchScreen>
     Timer(const Duration(seconds: 2), () {
       setState(() {
         _fontSize = 1.06;
+        if(_fontSize == 1.06){
+          showSubText = false;
+        }
       });
     });
 
@@ -54,7 +58,7 @@ class _LaunchScreenState extends State<LaunchScreen>
 
     Timer(const Duration(seconds: 4), () {
       setState(() {
-        Navigator.pushReplacement(context, PageTransition( const HomeScreen()));
+        navPushReplace(context, const IndexScreen());
       });
     });
   }
@@ -71,27 +75,15 @@ class _LaunchScreenState extends State<LaunchScreen>
     final double height = MediaQuery.of(context).size.height;
 
     return Scaffold(
-      backgroundColor: Colors.green,
+      // backgroundColor: Colors.green,
       body: Stack(
         children: [
           Column(
             children: [
               AnimatedContainer(
-                  duration: const Duration(milliseconds: 2000),
+                  duration: const Duration(milliseconds: 1000),
                   curve: Curves.fastLinearToSlowEaseIn,
                   height: height / _fontSize
-              ),
-              AnimatedOpacity(
-                duration: const Duration(milliseconds: 1000),
-                opacity: _textOpacity,
-                child: Text(
-                  'WiseVerbs',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontWeight: FontWeight.bold,
-                    fontSize: animation1.value,
-                  ),
-                ),
               ),
             ],
           ),
@@ -107,7 +99,7 @@ class _LaunchScreenState extends State<LaunchScreen>
                 width: width / _containerSize,
                 alignment: Alignment.center,
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Colors.transparent,
                   borderRadius: BorderRadius.circular(30),
                 ),
                 child: const Image(image: AssetImage(launchLogo),fit: BoxFit.cover,),
@@ -118,28 +110,4 @@ class _LaunchScreenState extends State<LaunchScreen>
       ),
     );
   }
-}
-
-class PageTransition extends PageRouteBuilder {
-  final Widget page;
-
-  PageTransition(this.page)
-      : super(
-    pageBuilder: (context, animation, anotherAnimation) => page,
-    transitionDuration: const Duration(milliseconds: 2000),
-    transitionsBuilder: (context, animation, anotherAnimation, child) {
-      animation = CurvedAnimation(
-        curve: Curves.fastLinearToSlowEaseIn,
-        parent: animation,
-      );
-      return Align(
-        alignment: Alignment.bottomCenter,
-        child: SizeTransition(
-          sizeFactor: animation,
-          axisAlignment: 0,
-          child: page,
-        ),
-      );
-    },
-  );
 }

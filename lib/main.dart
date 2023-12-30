@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:wise_verbs/constants/theme.dart';
+import 'package:wise_verbs/screens/index/index.dart';
 import 'package:wise_verbs/screens/launch_screen.dart';
 
 void main() {
@@ -14,9 +15,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MaterialApp(
       debugShowCheckedModeBanner: false,
-      theme: darkThemeData(context),
+      theme: darkTheme,
       themeMode: ThemeMode.dark,
-      home: const LaunchScreen(),
+      home: const IndexScreen(),
     );
   }
 }
