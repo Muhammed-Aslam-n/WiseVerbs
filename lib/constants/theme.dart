@@ -9,19 +9,19 @@ ThemeData darkTheme = ThemeData(
   cardColor: Colors.black,
   backgroundColor: Colors.black,
   scaffoldBackgroundColor: Colors.black,
-  appBarTheme: const AppBarTheme(
-    backgroundColor: darkPrimaryColor,
+  appBarTheme: AppBarTheme(
+    backgroundColor: Colors.grey.shade900,
     foregroundColor: Colors.white,
   ),
   textTheme: const TextTheme(),
   switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.all(Colors.cyan),
       trackColor: MaterialStateProperty.all(Colors.grey)),
-  colorScheme: const ColorScheme.dark(
+  colorScheme: ColorScheme.dark(
     primary: darkPrimaryColor,
     secondary: darkSecondaryColor,
     background: Colors.black,
-    tertiary: Colors.white,
+    tertiary: Colors.grey.shade900,
   ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: Colors.black,
@@ -39,6 +39,10 @@ ThemeData darkTheme = ThemeData(
       backgroundColor: MaterialStateProperty.all(Colors.white)
     ),
   ),
+  iconTheme: const IconThemeData(
+    color: Colors.white,
+  ),
+
 );
 
 ThemeData darkThemeData() {
