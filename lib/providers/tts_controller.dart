@@ -25,6 +25,7 @@ class TTSProvider extends ChangeNotifier{
       isSpeaking = true;
       _flutterTts.setCompletionHandler(() {
         isSpeaking = false;
+        notifyListeners();
       });
     } else {
       playingIndex = index??-1;

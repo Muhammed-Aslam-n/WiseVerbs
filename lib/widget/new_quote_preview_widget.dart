@@ -7,10 +7,13 @@ import 'package:wise_verbs/widget/route_transition.dart';
 import '../constants/constants.dart';
 
 class QuotePreviewWidget extends StatelessWidget {
-  final String quote, author;
+  final String quote, author, profilePicPath;
 
   const QuotePreviewWidget(
-      {Key? key, required this.quote, required this.author})
+      {Key? key,
+      required this.quote,
+      required this.author,
+      required this.profilePicPath})
       : super(key: key);
 
   @override
@@ -30,12 +33,15 @@ class QuotePreviewWidget extends StatelessWidget {
             child: Consumer<TTSProvider>(builder: (context, provider, _) {
               return IconButton(
                   onPressed: () {
-                    if(provider.isSpeaking){
+                    if (provider.isSpeaking) {
                       provider.stopSpeaking();
-                    }else{
+                    } else {
                       provider.speak('$quote by $author');
                     }
-                  }, icon: provider.isSpeaking?const Icon(Icons.pause):const Icon(Icons.play_arrow));
+                  },
+                  icon: provider.isSpeaking
+                      ? const Icon(Icons.pause)
+                      : const Icon(Icons.play_arrow));
             }),
           ),
           Expanded(
@@ -62,20 +68,33 @@ class QuotePreviewWidget extends StatelessWidget {
                       ),
                       Padding(
                         padding: EdgeInsets.only(left: width * 0.04),
-                        child: CircleAvatar(
-                          backgroundColor: Colors.white,
-                          foregroundColor: dodgerBlue,
-                          radius: 25,
-                          child: Text(
-                            'A',
-                            style:
-                                Theme.of(context).textTheme.titleSmall?.copyWith(
-                                      color: dodgerBlue,
-                                      fontWeight: FontWeight.w600,
-                                    ),
-                            softWrap: true,
-                          ),
-                        ),
+                        child: profilePicPath.isNotEmpty
+                            ? Container(
+                                height: 45,
+                                width: 45,
+                                decoration: BoxDecoration(
+                                  shape: BoxShape.circle,
+                                  image: DecorationImage(
+                                    image: NetworkImage(profilePicPath,),fit: BoxFit.cover
+                                  ),
+                                ),
+                              )
+                            : CircleAvatar(
+                                backgroundColor: Colors.white,
+                                foregroundColor: dodgerBlue,
+                                radius: 25,
+                                child: Text(
+                                  author.split('').first.toUpperCase(),
+                                  style: Theme.of(context)
+                                      .textTheme
+                                      .titleSmall
+                                      ?.copyWith(
+                                        color: dodgerBlue,
+                                        fontWeight: FontWeight.w600,
+                                      ),
+                                  softWrap: true,
+                                ),
+                              ),
                       ),
                       SizedBox(
                         height: width * 0.12,
@@ -126,7 +145,8 @@ class QuotePreviewWidget extends StatelessWidget {
                           style: ElevatedButton.styleFrom(
                             backgroundColor: Theme.of(context)
                                 .colorScheme
-                                .copyWith(tertiary: Colors.teal.withOpacity(0.9))
+                                .copyWith(
+                                    tertiary: Colors.teal.withOpacity(0.9))
                                 .tertiary,
                             elevation: 0.5,
                             shape: const CircleBorder(),

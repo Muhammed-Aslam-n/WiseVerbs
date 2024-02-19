@@ -7,7 +7,6 @@ ThemeData darkTheme = ThemeData(
   primaryColor: darkPrimaryColor,
   highlightColor: Colors.white,
   cardColor: Colors.black,
-  backgroundColor: Colors.black,
   scaffoldBackgroundColor: Colors.black,
   appBarTheme: AppBarTheme(
     backgroundColor: Colors.grey.shade900,
@@ -17,32 +16,36 @@ ThemeData darkTheme = ThemeData(
   switchTheme: SwitchThemeData(
       thumbColor: MaterialStateProperty.all(Colors.cyan),
       trackColor: MaterialStateProperty.all(Colors.grey)),
-  colorScheme: ColorScheme.dark(
-    primary: darkPrimaryColor,
-    secondary: darkSecondaryColor,
-    background: Colors.black,
-    tertiary: Colors.grey.shade900,
-  ),
   bottomNavigationBarTheme: BottomNavigationBarThemeData(
     backgroundColor: Colors.black,
     selectedItemColor: const Color(0xFF005A9C),
     unselectedItemColor: kContentColorDarkTheme.withOpacity(0.32),
     showUnselectedLabels: false,
   ),
+  textButtonTheme: TextButtonThemeData(
+      style: ButtonStyle(
+    foregroundColor: MaterialStateProperty.all(Colors.white),
+  )),
   elevatedButtonTheme: ElevatedButtonThemeData(
     style: ButtonStyle(
-      shape: MaterialStateProperty.all(
-        RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(8),
+        shape: MaterialStateProperty.all(
+          RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(8),
+          ),
         ),
-      ),
-      backgroundColor: MaterialStateProperty.all(Colors.white)
-    ),
+        backgroundColor: MaterialStateProperty.all(Colors.white)),
   ),
+  outlinedButtonTheme: const OutlinedButtonThemeData(style: ButtonStyle()),
+  floatingActionButtonTheme: const FloatingActionButtonThemeData(),
   iconTheme: const IconThemeData(
     color: Colors.white,
   ),
-
+  colorScheme: ColorScheme.dark(
+    primary: darkPrimaryColor,
+    secondary: darkSecondaryColor,
+    background: Colors.black,
+    tertiary: Colors.grey.shade900,
+  ).copyWith(background: Colors.black),
 );
 
 ThemeData darkThemeData() {
@@ -101,6 +104,11 @@ ThemeData darkThemeData() {
       selectedIconTheme: const IconThemeData(color: kPrimaryColor),
       showUnselectedLabels: true,
     ),
+    checkboxTheme: CheckboxThemeData(
+      fillColor: MaterialStateProperty.all(Colors.cyan),
+      checkColor: MaterialStateProperty.all(Colors.white),
+
+    )
   );
 }
 

@@ -4,18 +4,22 @@ class OutlinedButtonWidget extends StatelessWidget {
   final VoidCallback onPressed;
   final Color? bgColor, textColor;
   final EdgeInsets? padding;
+  final double? height, width;
+  final bool? textLarge,resize;
   final String text;
   final bool? invert;
 
-  const OutlinedButtonWidget(
-      {Key? key,
-      required this.onPressed,
-      this.bgColor,
-      this.textColor,
-      this.padding,
-      required this.text,
-      this.invert = false})
-      : super(key: key);
+  const OutlinedButtonWidget({
+    Key? key,
+    required this.onPressed,
+    this.bgColor,
+    this.textColor,
+    this.padding,
+    required this.text,
+    this.invert = false,
+    this.height,
+    this.width, this.textLarge, this.resize,
+  }) : super(key: key);
 
   @override
   Widget build(BuildContext context) {
@@ -24,6 +28,8 @@ class OutlinedButtonWidget extends StatelessWidget {
       style: OutlinedButton.styleFrom(
         backgroundColor:
             invert == true ? Colors.black : bgColor ?? Colors.white,
+        fixedSize: resize==true?Size(width??MediaQuery.of(context).size.width,
+            height??MediaQuery.of(context).size.width * 0.12):null,
         padding: padding ?? const EdgeInsets.symmetric(horizontal: 60),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
@@ -31,7 +37,7 @@ class OutlinedButtonWidget extends StatelessWidget {
       ),
       child: Text(
         text,
-        style: Theme.of(context).textTheme.bodySmall?.apply(
+        style: (textLarge==true?Theme.of(context).textTheme.bodyLarge:Theme.of(context).textTheme.bodySmall)?.apply(
               color: invert == true ? Colors.white : textColor ?? Colors.black,
             ),
       ),
@@ -42,8 +48,8 @@ class OutlinedButtonWidget extends StatelessWidget {
 class OutlinedIconButtonWidget extends StatelessWidget {
   final VoidCallback onPressed;
   final IconData icon;
-  final Color? bgColor, iconColor,borderColor;
-  final double? iconSize,btnWidth,btnHeight;
+  final Color? bgColor, iconColor, borderColor;
+  final double? iconSize, btnWidth, btnHeight;
   final EdgeInsets? padding, iconPadding;
   final bool? invert, showOutline;
 
@@ -57,7 +63,10 @@ class OutlinedIconButtonWidget extends StatelessWidget {
     this.iconColor,
     this.iconSize,
     this.iconPadding,
-    this.showOutline, this.borderColor, this.btnWidth, this.btnHeight,
+    this.showOutline,
+    this.borderColor,
+    this.btnWidth,
+    this.btnHeight,
   }) : super(key: key);
 
   @override
@@ -68,8 +77,8 @@ class OutlinedIconButtonWidget extends StatelessWidget {
         backgroundColor:
             invert == true ? Colors.black : bgColor ?? Colors.white,
         padding: padding ?? const EdgeInsets.symmetric(horizontal: 20),
-        side: BorderSide(color: borderColor??Colors.white),
-        fixedSize: Size(btnWidth??80, btnHeight??20),
+        side: BorderSide(color: borderColor ?? Colors.white),
+        fixedSize: Size(btnWidth ?? 80, btnHeight ?? 20),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(8),
         ),

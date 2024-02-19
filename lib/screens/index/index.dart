@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wise_verbs/constants/constants.dart';
-import 'package:wise_verbs/screens/contribution/contribution.dart';
+import 'package:wise_verbs/screens/contribution/user_contribution_screen.dart';
 import 'package:wise_verbs/screens/home/home_screen.dart';
 import 'package:wise_verbs/screens/index/post_quote_screen.dart';
 import 'package:wise_verbs/screens/index/stt_quote_screen.dart';
@@ -18,7 +18,7 @@ class IndexScreen extends StatefulWidget {
 }
 
 class _IndexScreenState extends State<IndexScreen> {
-  int selectedIndex = 1;
+  int selectedIndex = 0;
 
   changeIndex(index) {
     setState(() {
@@ -109,6 +109,8 @@ class _IndexScreenState extends State<IndexScreen> {
                             context,
                             const PostQuoteScreen(
                               isTtsEnabled: true,
+                              isUpdating: false,
+
                             ));
 
                         setState(() {
@@ -126,6 +128,7 @@ class _IndexScreenState extends State<IndexScreen> {
                             context,
                             const PostQuoteScreen(
                               isTtsEnabled: false,
+                              isUpdating: false,
                             ));
                         setState(() {
                           showOption = !showOption;

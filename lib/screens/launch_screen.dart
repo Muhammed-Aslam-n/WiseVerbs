@@ -1,10 +1,12 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import 'package:wise_verbs/constants/constants.dart';
-import 'package:wise_verbs/screens/home/home_screen.dart';
+import 'package:wise_verbs/providers/auth_provider/login_provider.dart';
+import 'package:wise_verbs/screens/auth_screen/get_started_screen.dart';
 import 'package:wise_verbs/screens/index/index.dart';
+import 'package:wise_verbs/service/shared_preference.dart';
 import 'package:wise_verbs/widget/route_transition.dart';
-
 
 class LaunchScreen extends StatefulWidget {
   const LaunchScreen({Key? key}) : super(key: key);
@@ -15,6 +17,8 @@ class LaunchScreen extends StatefulWidget {
 
 class _LaunchScreenState extends State<LaunchScreen>
     with TickerProviderStateMixin {
+  bool launchScreenCompleted = false;
+
   double _fontSize = 2;
   double _containerSize = 1.5;
   double _textOpacity = 0.0;
@@ -23,10 +27,11 @@ class _LaunchScreenState extends State<LaunchScreen>
   late AnimationController _controller;
   late Animation<double> animation1;
   bool showSubText = true;
+  bool isLoggedIn = false;
+
   @override
   void initState() {
-    super.initState();
-
+    navigateToAppropriateScreen();
     _controller =
         AnimationController(vsync: this, duration: const Duration(seconds: 3));
 
@@ -43,7 +48,7 @@ class _LaunchScreenState extends State<LaunchScreen>
     Timer(const Duration(seconds: 2), () {
       setState(() {
         _fontSize = 1.06;
-        if(_fontSize == 1.06){
+        if (_fontSize == 1.06) {
           showSubText = false;
         }
       });
@@ -58,9 +63,12 @@ class _LaunchScreenState extends State<LaunchScreen>
 
     Timer(const Duration(seconds: 4), () {
       setState(() {
-        navPushReplace(context, const IndexScreen());
+        //
+        launchScreenCompleted = true;
       });
     });
+
+    super.initState();
   }
 
   @override
@@ -74,40 +82,58 @@ class _LaunchScreenState extends State<LaunchScreen>
     final double width = MediaQuery.of(context).size.width;
     final double height = MediaQuery.of(context).size.height;
 
-    return Scaffold(
-      // backgroundColor: Colors.green,
-      body: Stack(
-        children: [
-          Column(
-            children: [
-              AnimatedContainer(
-                  duration: const Duration(milliseconds: 1000),
-                  curve: Curves.fastLinearToSlowEaseIn,
-                  height: height / _fontSize
+    return launchScreenCompleted
+          ? Consumer<LoginProvider>(builder: (builder, authProvider, _) {
+              debugPrint('User Login state changed ${authProvider.user}');
+              if (authProvider.user == null) {
+                debugPrint('showingGetStartedScreen');
+                return const GetStartedScreen();
+              } else {
+                debugPrint('showingIndexScreen');
+                return const IndexScreen();
+              }
+            })
+          : Scaffold(
+            body: Stack(
+                children: [
+                  Column(
+                    children: [
+                      AnimatedContainer(
+                          duration: const Duration(milliseconds: 1000),
+                          curve: Curves.fastLinearToSlowEaseIn,
+                          height: height / _fontSize),
+                    ],
+                  ),
+                  Center(
+                    child: AnimatedOpacity(
+                      duration: const Duration(milliseconds: 2000),
+                      curve: Curves.fastLinearToSlowEaseIn,
+                      opacity: _containerOpacity,
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 2000),
+                        curve: Curves.fastLinearToSlowEaseIn,
+                        height: width / _containerSize,
+                        width: width / _containerSize,
+                        alignment: Alignment.center,
+                        decoration: BoxDecoration(
+                          color: Colors.transparent,
+                          borderRadius: BorderRadius.circular(30),
+                        ),
+                        child: const Image(
+                          image: AssetImage(launchLogo),
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
               ),
-            ],
-          ),
-          Center(
-            child: AnimatedOpacity(
-              duration: const Duration(milliseconds: 2000),
-              curve: Curves.fastLinearToSlowEaseIn,
-              opacity: _containerOpacity,
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 2000),
-                curve: Curves.fastLinearToSlowEaseIn,
-                height: width / _containerSize,
-                width: width / _containerSize,
-                alignment: Alignment.center,
-                decoration: BoxDecoration(
-                  color: Colors.transparent,
-                  borderRadius: BorderRadius.circular(30),
-                ),
-                child: const Image(image: AssetImage(launchLogo),fit: BoxFit.cover,),
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
+          );
+  }
+
+  void navigateToAppropriateScreen() async {
+    isLoggedIn = await SharedPreferenceHelper.checkWhetherLoggedOrNot();
+    debugPrint('isLoggedIn $isLoggedIn');
+    setState(() {});
   }
 }

@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "737961101452",
+    "project_id": "wiseverbs-5195e",
+    "storage_bucket": "wiseverbs-5195e.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:737961101452:android:ed84b5605007ea7cd3d3a9",
+        "android_client_info": {
+          "package_name": "com.example.wise_verbs"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyAkPiBlm54E-8ASjcAFYSHHGeuvPE5sdqc"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

@@ -17,6 +17,13 @@ navPushReplace(BuildContext context,Widget page,{String? routeName,Curve? curve}
     Navigator.pushReplacementNamed(context, routeName);
   }
 }
+navPopCompletelyAndPush(BuildContext context,Widget page,{String? routeName,Curve? curve}){
+  if(routeName == null) {
+    Navigator.pushAndRemoveUntil(context, PageTransition(  page,curve: curve),(Route<dynamic> route) => false);
+  }else{
+    Navigator.pushNamedAndRemoveUntil(context, routeName,(route) => false,);
+  }
+}
 
 navPop(BuildContext context){
   Navigator.pop(context);

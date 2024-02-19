@@ -5,7 +5,12 @@ import 'package:flutter/material.dart';
 import 'package:image_cropper/image_cropper.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:permission_handler/permission_handler.dart';
+import 'package:provider/provider.dart';
+import 'package:wise_verbs/models/register_user_model.dart';
+import 'package:wise_verbs/providers/profile_provider.dart';
+import 'package:wise_verbs/screens/auth_screen/update_credentials.dart';
+import 'package:wise_verbs/widget/loading_overlay.dart';
+import 'package:wise_verbs/widget/loading_widget.dart';
 import 'package:wise_verbs/widget/outlined_button.dart';
 import 'package:wise_verbs/widget/route_transition.dart';
 import 'package:wise_verbs/widget/text_form_widget.dart';
@@ -23,128 +28,156 @@ class AddUpdateProfile extends StatefulWidget {
 class _AddUpdateProfileState extends State<AddUpdateProfile> {
   final _formKey = GlobalKey<FormState>();
 
+  late ProfileProvider provider;
+
+  @override
+  void initState() {
+    provider = Provider.of<ProfileProvider>(context, listen: false);
+    provider.fetchUserProfileData();
+    super.initState();
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      appBar: AppBar(
-        title: const Text('Add Profile'),
-      ),
-      body: GestureDetector(
-        onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
-        child: SingleChildScrollView(
-          child: Padding(
-            padding: const EdgeInsets.all(15.0),
-            child: Form(
-              key: _formKey,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Center(
-                    child: _croppedFile == null
-                        ? ElevatedButton(
-                            onPressed: () async {
-                              _showSelectPlatformOption();
-                            },
-                            style: ElevatedButton.styleFrom(
-                              foregroundColor: Theme.of(context).highlightColor,
-                              backgroundColor:
-                                  Theme.of(context).colorScheme.tertiary,
-                              // Text color
-                              side: const BorderSide(
-                                  color: Colors.white, width: 0.5),
-                              padding: const EdgeInsets.all(50),
-                              shape: const CircleBorder(),
-                              // Border settings
-                              elevation: 0,
-                            ),
-                            child: Column(
-                              children: [
-                                const Icon(CupertinoIcons.cloud_upload),
-                                Text(
-                                  '\nUpload  Photo',
-                                  style: Theme.of(context)
-                                      .textTheme
-                                      .bodySmall
-                                      ?.copyWith(fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          )
-                        : AspectRatio(
-                            aspectRatio: 2 / 0.9,
-                            child: Stack(
-                              children: [
-                                Container(
-                                  decoration: BoxDecoration(
-                                    shape: BoxShape.circle,
-                                    image: DecorationImage(
-                                      image: FileImage(
-                                        File(
-                                          _croppedFile!.path,
-                                        ),
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                Positioned(
-                                  right:
-                                      MediaQuery.of(context).size.width * 0.26,
-                                  child: Container(
-                                    padding: const EdgeInsets.all(0),
-                                    decoration: BoxDecoration(
-                                      shape: BoxShape.circle,
-                                      color: Theme.of(context)
-                                          .colorScheme
-                                          .tertiary,
-                                    ),
-                                    child: IconButton(
-                                      onPressed: () {
-                                        _showSelectPlatformOption();
-                                      },
-                                      icon: const Icon(
-                                        Icons.edit,
-                                      ),
-                                      padding: EdgeInsets.zero,
-                                    ),
-                                  ),
-                                )
-                              ],
-                            ),
-                          ),
+    return PopScope(
+      canPop: true,
+      onPopInvoked: (pop) {
+        provider.changeEditStatus(false);
+      },
+      child: Scaffold(
+        resizeToAvoidBottomInset: true,
+        appBar: AppBar(
+          title: const Text('Your Profile'),
+          actions: [
+            PopupMenuButton(
+              itemBuilder: (context) {
+                return [
+                  // PopupMenuItem(
+                  //   child: const Text('Update Email'),
+                  //   onTap: () => navPush(
+                  //     context,
+                  //     UpdateCredentialsScreen(updateType: UpdateType.email,),
+                  //   ),
+                  // ),
+                  PopupMenuItem(
+                    child: const Text('Update Password'),
+                    onTap: () => navPush(
+                      context,
+                      UpdateCredentialsScreen(updateType: UpdateType.password,),
+                    ),
                   ),
-                  ...detailsSection(),
-                  const SizedBox(
-                    height: 25,
+                ];
+              },
+            ),
+          ],
+        ),
+        body: Consumer<ProfileProvider>(builder: (context, pProvider, _) {
+          if (pProvider.userProfileData == null) {
+            return const Center(
+              child: LoadingWidget(),
+            );
+          }
+          RegisterUserModel userData = pProvider.userProfileData!;
+          return LoadingOverlay(
+            isLoading: pProvider.isLoading,
+            child: GestureDetector(
+              // onTap: () => FocusManager.instance.primaryFocus?.unfocus(),
+              child: SingleChildScrollView(
+                child: Padding(
+                  padding: const EdgeInsets.all(15.0),
+                  child: Form(
+                    key: _formKey,
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        userData.profilePicture.isEmpty &&
+                                pProvider.croppedFile == null
+                            ? uploadProfilePicWidget(
+                                onPressed: () {
+                                  _showSelectPlatformOption();
+                                },
+                              )
+                            : pProvider.croppedFile == null
+                                ? profileDisplayWidget(
+                                    networkImage: true,
+                                    isEditing: pProvider.isEditing,
+                                    imageFile: userData.profilePicture,
+                                    onPressed: () {
+                                      _showSelectPlatformOption();
+                                    },
+                                  )
+                                : profileDisplayWidget(
+                                    networkImage: false,
+                                    isEditing: pProvider.isEditing,
+                                    imageFile:
+                                        File(pProvider.croppedFile!.path),
+                                    onPressed: () {
+                                      _showSelectPlatformOption();
+                                    },
+                                  ),
+                        ...detailsSection(provider: pProvider),
+                        const SizedBox(
+                          height: 25,
+                        ),
+                        pProvider.isEditing
+                            ? Row(
+                                mainAxisAlignment:
+                                    MainAxisAlignment.spaceBetween,
+                                children: [
+                                  OutlinedButtonWidget(
+                                    onPressed: () {
+                                      provider.changeEditStatus(false);
+                                    },
+                                    text: 'Cancel',
+                                    bgColor: Colors.black,
+                                    textColor: Colors.white,
+                                  ),
+                                  OutlinedButtonWidget(
+                                    onPressed: () =>
+                                        _validate(userData.profilePicture),
+                                    text: 'Update',
+                                  ),
+                                ],
+                              )
+                            : const SizedBox.shrink(),
+                        const SizedBox(
+                          height: 30,
+                        ),
+                      ],
+                    ),
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      OutlinedButtonWidget(onPressed: _resetForm, text: 'Clear',bgColor: Colors.black,textColor: Colors.white,),
-                      OutlinedButtonWidget(onPressed: _validate, text: 'Upload'),
-                    ],
-                  )
-                ],
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        }),
+        floatingActionButton:
+            Consumer<ProfileProvider>(builder: (context, pProvider, _) {
+          if (provider.isEditing == false) {
+            return FloatingActionButton(
+              backgroundColor: Colors.blue,
+              onPressed: () {
+                provider.changeEditStatus(true);
+              },
+              child: const Icon(
+                Icons.edit_note_outlined,
+              ),
+            );
+          }
+          return const SizedBox.shrink();
+        }),
       ),
     );
   }
 
-  TextEditingController nameController = TextEditingController();
-  TextEditingController occupationController = TextEditingController();
-  TextEditingController descriptionController = TextEditingController();
-  TextEditingController favQuoteController = TextEditingController();
-  TextEditingController mostInfController = TextEditingController();
-
-  detailsSection() {
+  detailsSection({required ProfileProvider provider}) {
     return [
       TextFormWidget(
+        isEditing: provider.isEditing,
         errorMsg: nameErrorMsg,
         label: 'Name',
         helperText: 'Name',
-        controller: nameController,
+        controller: provider.nameController,
         icon: const Icon(Icons.person),
         inputFormatter: nameInputFormatter,
         validator: (name) {
@@ -158,10 +191,11 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
         height: 10,
       ),
       TextFormWidget(
+        isEditing: provider.isEditing,
         errorMsg: occupationErrorMsg,
         label: 'Occupation',
         helperText: 'Occupation',
-        controller: occupationController,
+        controller: provider.occupationController,
         inputFormatter: occupationInputFormatter,
         icon: const Icon(Icons.work_sharp),
         validator: (occupation) {
@@ -175,10 +209,11 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
         height: 10,
       ),
       TextFormWidget(
+        isEditing: provider.isEditing,
         errorMsg: nameErrorMsg,
         label: "Who's your biggest inspiration?",
         helperText: "Who's your biggest inspiration?",
-        controller: mostInfController,
+        controller: provider.mostInfController,
         icon: const Icon(CupertinoIcons.star_lefthalf_fill),
         inputFormatter: nameInputFormatter,
         validator: (influenced) {
@@ -192,10 +227,11 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
         height: 30,
       ),
       TextFormWidget(
+        isEditing: provider.isEditing,
         errorMsg: nameErrorMsg,
         label: 'Favourite Quote',
         helperText: 'Favourite Quote',
-        controller: favQuoteController,
+        controller: provider.favQuoteController,
         maxLine: 3,
         outLineBorder: true,
         icon: const Icon(Icons.format_quote_outlined),
@@ -211,10 +247,11 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
         height: 30,
       ),
       TextFormWidget(
+        isEditing: provider.isEditing,
         errorMsg: nameErrorMsg,
         label: 'About you',
         helperText: 'About you',
-        controller: descriptionController,
+        controller: provider.descriptionController,
         maxLine: 3,
         outLineBorder: true,
         icon: const Icon(Icons.description),
@@ -230,27 +267,130 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
     ];
   }
 
-  void _validate() {
-    if (_formKey.currentState!.validate()) {}
+  Widget uploadProfilePicWidget({
+    required VoidCallback onPressed,
+  }) {
+    return Center(
+      child: ElevatedButton(
+        onPressed: () async {
+          _showSelectPlatformOption();
+        },
+        style: ElevatedButton.styleFrom(
+          foregroundColor: Theme.of(context).highlightColor,
+          backgroundColor: Theme.of(context).colorScheme.tertiary,
+          // Text color
+          side: const BorderSide(color: Colors.white, width: 0.5),
+          padding: const EdgeInsets.all(50),
+          shape: const CircleBorder(),
+          // Border settings
+          elevation: 0,
+        ),
+        child: Column(
+          children: [
+            const Icon(CupertinoIcons.cloud_upload),
+            Text(
+              '\nUpload  Photo',
+              style:
+                  Theme.of(context).textTheme.bodySmall?.copyWith(fontSize: 11),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
-  void _resetForm() {
-    _formKey.currentState?.reset();
-    _croppedFile=null;
-    nameController.clear();
-    occupationController.clear();
-    descriptionController.clear();
-    favQuoteController.clear();
-    mostInfController.clear();
-    _formKey.currentState?.reset();
-    setState(() {
-      debugPrint('setStateCalled');
-    });
+  Widget profileDisplayWidget({
+    required dynamic imageFile,
+    required VoidCallback onPressed,
+    required bool networkImage,
+    required bool isEditing,
+    Icon? icon,
+  }) {
+    return AspectRatio(
+      aspectRatio: 2 / 0.9,
+      child: Stack(
+        children: [
+          Center(
+            child: Container(
+              alignment: Alignment.center,
+              height: MediaQuery.of(context).size.width * 0.6,
+              width: MediaQuery.of(context).size.width * 0.6,
+              decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  image: networkImage
+                      ? DecorationImage(
+                          image: NetworkImage(
+                            imageFile,
+                          ),
+                        )
+                      : DecorationImage(
+                          image: FileImage(
+                            imageFile,
+                          ),
+                        )),
+            ),
+          ),
+          isEditing
+              ? Positioned(
+                  right: MediaQuery.of(context).size.width * 0.26,
+                  child: Container(
+                    padding: const EdgeInsets.all(0),
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: Theme.of(context).colorScheme.tertiary,
+                    ),
+                    child: IconButton(
+                      onPressed: onPressed,
+                      icon: icon ??
+                          const Icon(
+                            Icons.edit,
+                          ),
+                      padding: EdgeInsets.zero,
+                    ),
+                  ),
+                )
+              : const SizedBox.shrink(),
+        ],
+      ),
+    );
   }
 
-  XFile? _pickedFile;
+  void _validate(imagePath) async {
+    if (_formKey.currentState!.validate()) {
+      RegisterUserModel updatedData = RegisterUserModel(
+        name: provider.nameController.text,
+        occupation: provider.occupationController.text,
+        inspiration: provider.mostInfController.text,
+        favQuote: provider.favQuoteController.text,
+        aboutYou: provider.descriptionController.text,
+        profilePicture: provider.croppedFile != null
+            ? provider.croppedFile!.path
+            : imagePath,
+      );
+      final updateRes = await provider.updateUserProfile(
+          updateData: updatedData,
+          profilePicUpdating: provider.croppedFile != null ? true : false);
+      if (updateRes == true && mounted) {
+        showToast(context, 'Profile updated successfully', success: true);
+      } else if (mounted) {
+        showToast(context, 'Something went wrong, Try later', failure: true);
+      }
+    }
+  }
 
-  CroppedFile? _croppedFile;
+  // void _resetForm() {
+  //   _formKey.currentState?.reset();
+  //   _croppedFile = null;
+  //   provider.nameController.clear();
+  //   provider.occupationController.clear();
+  //   provider.descriptionController.clear();
+  //   provider.favQuoteController.clear();
+  //   provider.mostInfController.clear();
+  //   _formKey.currentState?.reset();
+  //   setState(() {
+  //     debugPrint('setStateCalled');
+  //   });
+  // }
 
   void _showSelectPlatformOption() {
     showDialog(
@@ -352,15 +492,15 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
   void _pickProfile(ImageSource source) async {
     try {
       final ImagePicker picker = ImagePicker();
-      _pickedFile = await picker.pickImage(source: source);
-      if (_pickedFile != null) {
+      provider.pickedFile = await picker.pickImage(source: source);
+      if (provider.pickedFile != null) {
         final cropped = await _cropImage();
         if (cropped) {
           await _saveImage();
           if (mounted) {
             showToast(
               context,
-              'Profile picture uploaded successfully',
+              'Profile picture selected successfully',
               success: true,
             );
             setState(() {});
@@ -399,7 +539,7 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
       final formattedDate = '${now.year}-${now.month}-${now.day}';
       final imageName = 'profile_pic_$formattedDate.png';
       final imagePath = '${directory.path}/$imageName';
-      final file = File(_croppedFile!.path);
+      final file = File(provider.croppedFile!.path);
       await file.copy(imagePath);
       debugPrint('Image saved as $imagePath');
       return true;
@@ -411,18 +551,19 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
 
   Future<bool> _cropImage() async {
     try {
-      if (_pickedFile != null) {
+      if (provider.pickedFile != null) {
         final croppedFile = await ImageCropper().cropImage(
-          sourcePath: _pickedFile!.path,
+          sourcePath: provider.pickedFile!.path,
           compressFormat: ImageCompressFormat.jpg,
           compressQuality: 100,
           uiSettings: [
             AndroidUiSettings(
-                toolbarTitle: 'Adjust your Profile Pic',
-                toolbarColor: Colors.deepOrange,
-                toolbarWidgetColor: Colors.white,
-                initAspectRatio: CropAspectRatioPreset.original,
-                lockAspectRatio: false),
+              toolbarTitle: 'Adjust your Profile Pic',
+              toolbarColor: Colors.deepOrange,
+              toolbarWidgetColor: Colors.white,
+              initAspectRatio: CropAspectRatioPreset.original,
+              lockAspectRatio: false,
+            ),
             IOSUiSettings(
               title: 'Adjust your Profile Pic',
             ),
@@ -442,9 +583,7 @@ class _AddUpdateProfileState extends State<AddUpdateProfile> {
           ],
         );
         if (croppedFile != null) {
-          setState(() {
-            _croppedFile = croppedFile;
-          });
+          provider.changeCroppedFile(croppedFile);
         }
         return true;
       }

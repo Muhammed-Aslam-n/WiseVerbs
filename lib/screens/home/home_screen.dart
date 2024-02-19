@@ -1,10 +1,16 @@
+import 'dart:convert';
+import 'dart:developer';
+import 'dart:ffi';
+
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:wise_verbs/constants/constants.dart';
+import 'package:wise_verbs/providers/home_screen_provider.dart';
 import 'package:wise_verbs/utils/utils.dart';
-import 'package:wise_verbs/widget/loading_widget.dart';
 
+import '../../models/post_quote_model.dart';
 import '../../providers/tts_controller.dart';
 
 class HomeScreen extends StatelessWidget {
@@ -16,70 +22,146 @@ class HomeScreen extends StatelessWidget {
       body: Padding(
         padding: const EdgeInsets.all(15.0),
         child: SingleChildScrollView(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.start,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Align(
-                alignment: Alignment.topRight,
-                child: AspectRatio(
-                  aspectRatio: 5 / 1.5,
-                  child: Image.asset(
-                    launchLogo,
+          child:
+              Consumer<HomeScreenProvider>(builder: (context, hsProvider, _) {
+            return Column(
+              mainAxisAlignment: MainAxisAlignment.start,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Align(
+                  alignment: Alignment.topRight,
+                  child: AspectRatio(
+                    aspectRatio: 5 / 1.5,
+                    child: Image.asset(
+                      launchLogo,
+                    ),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 10),
-                child: Text(
-                  'Popular Quotes',
-                  style: Theme.of(context).textTheme.titleLarge,
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 10),
+                  child: Text(
+                    'Popular Quotes',
+                    style: Theme.of(context).textTheme.titleLarge,
+                  ),
                 ),
-              ),
-              const SizedBox(
-                height: 30,
-              ),
-              FutureBuilder(
-                future: Future.delayed(const Duration(milliseconds: 1)),
-                builder: (context, snapshot) {
-                  if (snapshot.connectionState == ConnectionState.active ||
-                      snapshot.connectionState == ConnectionState.waiting) {
-                    return const LoadingWidget();
-                  }
+                const SizedBox(
+                  height: 30,
+                ),
+                StreamBuilder<QuerySnapshot>(
+                  stream: hsProvider.quoteCategoryStream,
+                  builder: (context, snapshot) {
+                    // printSuccess('FilteredList ${hsProvider.filterList.isEmpty}');
 
-                  return SizedBox(
-                    width: MediaQuery.of(context).size.width,
-                    height: MediaQuery.of(context).size.height * 0.65,
-                    child: ListView.builder(
-                      shrinkWrap: true,
-                      padding: EdgeInsets.zero,
-                      itemCount: 30,
-                      scrollDirection: Axis.horizontal,
-                      physics: const BouncingScrollPhysics(),
-                      itemBuilder: (context, index) {
-                        Map<String, dynamic> pickedTheme =
-                            quoteCardThemePicker();
-                        return SizedBox(
-                          // height: MediaQuery.of(context).size.height - 100,
-                          width: MediaQuery.of(context).size.width - 20,
-                          child: AnimationWidget(
-                            index: index,
-                            quoteFont: pickedTheme['quoteFont'],
-                            bgColor: pickedTheme['bgColor'],
-                            ownerColor: pickedTheme['ownerColor'],
-                            quoteColor: pickedTheme['quoteColor'],
-                            iconColor: pickedTheme['iconColor'],
-                          ),
+                    log('groupedQuotes ${jsonEncode(hsProvider.groupedQuotes)}');
+
+                    hsProvider.groupedQuotes.forEach((key, value) {
+                      printInfo('filteredList key $key $value');
+                    });
+                    if (hsProvider.groupedQuotes.isEmpty) {
+                      return Center(
+                        child: Text(
+                          'No Popular quotes yet!',
+                          style: Theme.of(context).textTheme.headlineMedium,
+                        ),
+                      );
+                    }
+                    // return Text('Soon');
+                    return ListView.builder(
+                      physics: const NeverScrollableScrollPhysics(),
+                      itemBuilder: (itemBuilder, index) {
+                        final categorizedQuote = hsProvider.groupedQuotes;
+                        String category =
+                            categorizedQuote.keys.elementAt(index);
+                        List<Map<String, dynamic>> quoteList =
+                            categorizedQuote.values.elementAt(index);
+
+                        return PopularQuotesByCategoryWidget(
+                          categoryName: category,
+                          quotes:
+                              quoteList.map((e) => Quote.fromJson(e)).toList(),
+                          contributionProvider: hsProvider,
                         );
                       },
-                    ),
-                  );
-                },
-              ),
-            ],
-          ),
+                      itemCount: hsProvider.groupedQuotes.length,
+                      shrinkWrap: true,
+                    );
+                  },
+                )
+              ],
+            );
+          }),
         ),
       ),
+    );
+  }
+}
+
+class PopularQuotesByCategoryWidget extends StatelessWidget {
+  const PopularQuotesByCategoryWidget({
+    Key? key,
+    required this.categoryName,
+    required this.contributionProvider,
+    required this.quotes,
+  }) : super(key: key);
+
+  // final int itemCount;
+  final HomeScreenProvider contributionProvider;
+  final String categoryName;
+  final List<Quote> quotes;
+
+  @override
+  Widget build(BuildContext context) {
+    printSuccess('categories $categoryName');
+    return Column(
+      children: [
+        const SizedBox(
+          height: 10,
+        ),
+        Text(
+          categoryName,
+          style: Theme.of(context)
+              .textTheme
+              .headlineSmall
+              ?.copyWith(fontWeight: FontWeight.w600),
+        ),
+        const SizedBox(
+          height: 15,
+        ),
+        SizedBox(
+          width: MediaQuery.of(context).size.width,
+          height: MediaQuery.of(context).size.height * 0.65,
+          child: ListView.builder(
+            shrinkWrap: true,
+            padding: EdgeInsets.zero,
+            itemCount: quotes.length,
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemBuilder: (context, index) {
+              Map<String, dynamic> pickedTheme = quoteCardThemePicker();
+              final Quote quote = quotes[index];
+
+              return SizedBox(
+// height: MediaQuery.of(context).size.height - 100,
+                width: MediaQuery.of(context).size.width - 20,
+                child: AnimationWidget(
+                  quote: quote,
+                  isLiked: quote.likedUIDs == null
+                      ? false
+                      : quote.likedUIDs!
+                          .contains(contributionProvider.currentUID),
+                  likes: quote.likes ?? 0,
+                  index: index,
+                  quoteFont: pickedTheme['quoteFont'],
+                  bgColor: pickedTheme['bgColor'],
+                  ownerColor: pickedTheme['ownerColor'],
+                  quoteColor: pickedTheme['quoteColor'],
+                  iconColor: pickedTheme['iconColor'],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 }
@@ -87,16 +169,23 @@ class HomeScreen extends StatelessWidget {
 class AnimationWidget extends StatefulWidget {
   final int index;
   final String quoteFont;
+  final Quote quote;
+  final int likes;
+  final bool isLiked;
   final Color? quoteColor, bgColor, ownerColor, iconColor;
 
-  const AnimationWidget(
-      {super.key,
-      required this.index,
-      this.quoteColor,
-      this.bgColor,
-      this.ownerColor,
-      this.iconColor,
-      required this.quoteFont});
+  const AnimationWidget({
+    super.key,
+    required this.index,
+    this.quoteColor,
+    this.bgColor,
+    this.ownerColor,
+    this.iconColor,
+    required this.quoteFont,
+    required this.quote,
+    required this.likes,
+    required this.isLiked,
+  });
 
   @override
   State<AnimationWidget> createState() => _AnimationWidgetState();
@@ -109,7 +198,7 @@ class _AnimationWidgetState extends State<AnimationWidget> {
   void initState() {
     super.initState();
     // Set a delay to start the animation for each item
-    Future.delayed(Duration(milliseconds: widget.index * 300), () {
+    Future.delayed(Duration(milliseconds: widget.index * 10), () {
       if (mounted) {
         setState(() {
           isVisible = true;
@@ -130,15 +219,23 @@ class _AnimationWidgetState extends State<AnimationWidget> {
       opacity: isVisible ? 1.0 : 0.0,
       duration: const Duration(milliseconds: 300),
       curve: Curves.fastLinearToSlowEaseIn,
-      child: popularQuoteItemWidget(widget.index),
+      child: popularQuoteItemWidget(
+        quote: widget.quote,
+        likes: widget.likes,
+        index: widget.index,
+        isLiked: widget.isLiked,
+      ),
     );
   }
 
-  Widget popularQuoteItemWidget(int index) {
+  Widget popularQuoteItemWidget({
+    required int index,
+    required Quote quote,
+    required int likes,
+    required bool isLiked,
+  }) {
     final width = MediaQuery.of(context).size.width;
     debugPrint('font ${widget.quoteFont}');
-    const String quote = "Quiet people have the loudestesteses minds.";
-    const String author = "Stephen Hawking";
     return GestureDetector(
       onDoubleTap: () {
         setState(() {
@@ -205,7 +302,7 @@ class _AnimationWidgetState extends State<AnimationWidget> {
                           child: Column(
                             children: [
                               SelectableText(
-                               quote ,
+                                quote.quote ?? 'Quote not found',
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleLarge
@@ -218,7 +315,8 @@ class _AnimationWidgetState extends State<AnimationWidget> {
                                 height: 15,
                               ),
                               SelectableText(
-                                author.toUpperCase(),
+                                quote.author ??
+                                    'Author not found'.toUpperCase(),
                                 style: Theme.of(context)
                                     .textTheme
                                     .titleSmall
@@ -234,29 +332,6 @@ class _AnimationWidgetState extends State<AnimationWidget> {
                       const SizedBox(
                         height: 10,
                       ),
-                      // Row(
-                      //   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                      //   children: [
-                      //     const SizedBox(
-                      //       width: 20,
-                      //     ),
-                      //
-                      //     IconButton(
-                      //       onPressed: () {},
-                      //       icon: const Icon(
-                      //         Icons.share,
-                      //         size: 23,
-                      //       ),
-                      //     ),
-                      //     IconButton(
-                      //       onPressed: () {},
-                      //       icon: const Icon(
-                      //         Icons.copy,
-                      //         size: 23,
-                      //       ),
-                      //     ),
-                      //   ],
-                      // )
                     ],
                   ),
                 ),
@@ -275,14 +350,24 @@ class _AnimationWidgetState extends State<AnimationWidget> {
                           if (provider.isSpeaking) {
                             provider.stopSpeaking();
                           } else {
-                            provider.speak(
-                                '$quote by $author', index: index);
+                            provider.speak('${quote.quote} by ${quote.author}',
+                                index: index);
                           }
                         },
-                        icon: provider.isSpeaking ? provider
-                            .playingIndex == index ? const Icon(Icons.stop):
-                        const Icon(Icons.play_arrow)
-                            : const Icon(Icons.play_arrow),
+                        icon: provider.isSpeaking
+                            ? provider.playingIndex == index
+                                ? Icon(
+                                    Icons.stop,
+                                    color: widget.iconColor,
+                                  )
+                                : Icon(
+                                    Icons.play_arrow,
+                                    color: widget.iconColor,
+                                  )
+                            : Icon(
+                                Icons.play_arrow,
+                                color: widget.iconColor,
+                              ),
                       );
                     },
                   ),
@@ -291,18 +376,25 @@ class _AnimationWidgetState extends State<AnimationWidget> {
                         setState(() {
                           favorite = !favorite;
                         });
+                        final HomeScreenProvider provider =
+                            Provider.of<HomeScreenProvider>(context,
+                                listen: false);
+                        isLiked
+                            ? provider.likeOrUnlike(false,quote)
+                            : provider.likeOrUnlike(true,quote);
                       },
                       icon: Icon(
-                        favorite
+                        isLiked
                             ? CupertinoIcons.heart_fill
                             : CupertinoIcons.heart,
-                        color: favorite ? widget.iconColor : null,
+                        color: widget.iconColor,
                       )),
                   IconButton(
                     onPressed: () {},
-                    icon: const Icon(
+                    icon: Icon(
                       Icons.share,
                       size: 23,
+                      color: widget.iconColor,
                     ),
                   ),
                 ],

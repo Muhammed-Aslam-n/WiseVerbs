@@ -13,6 +13,7 @@ class TextFormWidget extends StatelessWidget {
   final AutovalidateMode? validateMode;
   final List<TextInputFormatter>? inputFormatter;
   final bool? outLineBorder;
+  final bool isEditing;
 
   const TextFormWidget({
     Key? key,
@@ -21,13 +22,14 @@ class TextFormWidget extends StatelessWidget {
     required this.helperText,
     required this.controller,
     required this.validator,
-    required this.icon,
+    required this.icon,required this.isEditing,
     this.keyboardType,
     this.inputAction,
     this.validateMode,
     this.inputFormatter,
     this.maxLine,
     this.minLine, this.outLineBorder,
+
   }) : super(key: key);
 
   @override
@@ -39,6 +41,7 @@ class TextFormWidget extends StatelessWidget {
       textInputAction: inputAction ?? TextInputAction.next,
       autovalidateMode: validateMode ?? AutovalidateMode.onUserInteraction,
       inputFormatters: inputFormatter ?? [],
+      enabled: isEditing,
       maxLines: maxLine,
       minLines: minLine,
       decoration: InputDecoration(
